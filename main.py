@@ -9,9 +9,9 @@ randomdata
 twoclusters
 threeclusters
 fourclusters
-squareddata
+squaredclusters
 '''
-from messedupclusters import classA, classB, data, N
+from fourclusters import classA, classB, data, N
 
 # kernel definitions
 def linearKernel(x, y):
@@ -41,36 +41,43 @@ print(radialBasisKernel(a, b, 2))
 print(sigmoidKernel(a, b, 0.1, 2))
 '''
 
-# build P matrix p(i, j) = ti tj K(xi, xj)
+''' build P matrix p(i, j) = ti tj K(xi, xj) '''
 P = np.empty([N, N])
-for i in range(0, N):
-    for j in range(0, N):
+for i in range(N):
+    for j in range(N):
         ti = data[i][2]
         tj = data[j][2]
         xi = np.array([data[i][0], data[i][1]])
         xj = np.array([data[j][0], data[j][1]])
         P[i, j] = ti * tj * kernel(xi, xj)
 
-# build q, h, G
-q = np.array([-1.0 for i in range(0, N)])
-h = np.array([0.0  for i in range(0, N)])
-G = np.zeros((N, N), float)
-np.fill_diagonal(G, -1)
+''' build q '''
+q = np.ones(N) * -1
 
-# solve convex problem
+''' build G and h according to slack constraints '''
+C = 3
+if C is None:
+    ''' simply N constraints alphai >= 0 '''
+    G = np.diag(np.ones(N) * -1)
+    h = np.zeros(N)
+else:
+    ''' N constraints alphai >= 0 and N constraints alphai <= C '''
+    G = np.vstack((np.diag(np.ones(N) * -1), np.diag(np.ones(N))))
+    h = np.hstack((np.zeros(N), np.ones(N) * C))
+
+''' solve convex problem '''
 r = qp(matrix(P), matrix(q), matrix(G), matrix(h))
 alpha = list(r['x'])
 
-# keep non zero alphas and their datapoints
-# support[i][0] = alpha
-# support[i][1] = datapoint numpy vector
-# support[i][2] = datapoint class
-support = []
-for i in range(N):
-    if alpha[i] > 10e-5:
-        support.append([alpha[i], np.array([data[i][0], data[i][1]]), data[i][2]])
+'''
+keep non zero alphas and their datapoints
+ support[i][0] = alpha
+ support[i][1] = datapoint numpy vector
+ support[i][2] = datapoint class
+'''
+support = [[alpha[i], np.array([data[i][0], data[i][1]]), data[i][2]] for i in range(N) if alpha[i] > 10e-5]
 
-# draw contour lines
+''' draw contour lines '''
 xrange = np.arange(-4, 4, 0.05)
 yrange = np.arange(-4, 4, 0.05)
 grid = matrix([
