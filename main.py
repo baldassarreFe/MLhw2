@@ -10,8 +10,9 @@ twoclusters
 threeclusters
 fourclusters
 squaredclusters
+messedupclusters
 '''
-from fourclusters import classA, classB, data, N
+from twoclusters import classA, classB, data, N
 
 # kernel definitions
 def linearKernel(x, y):
@@ -20,11 +21,11 @@ def linearKernel(x, y):
 def polynomialKernel(x, y, p = 2):
     return (np.dot(x, y) + 1) ** p
 
-def radialBasisKernel(x, y, sigma = 3):
+def radialBasisKernel(x, y, sigma = 2):
     return math.exp(-np.linalg.norm(x - y) ** 2 / (2 * sigma ** 2))
 
-def sigmoidKernel(x, y, k = 2, delta = 1):
-    return math.tanh(np.dot(k * x, y) - delta)
+def sigmoidKernel(x, y, k = 1.0/80, delta = -3):
+    return math.tanh(np.dot(x * k, y) - delta)
 
 kernel = radialBasisKernel
 
@@ -55,7 +56,7 @@ for i in range(N):
 q = np.ones(N) * -1
 
 ''' build G and h according to slack constraints '''
-C = 3
+C = None
 if C is None:
     ''' simply N constraints alphai >= 0 '''
     G = np.diag(np.ones(N) * -1)
